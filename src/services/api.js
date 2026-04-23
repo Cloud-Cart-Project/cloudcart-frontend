@@ -1,13 +1,26 @@
 import axios from 'axios';
 
+const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/').trim();
+const normalizedBaseUrl = rawBaseUrl.endsWith('/') && rawBaseUrl !== '/'
+  ? rawBaseUrl.slice(0, -1)
+  : rawBaseUrl;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/',
+  baseURL: normalizedBaseUrl || '/',
   timeout: 10000,
 });
 
 // Request Interceptor: Attach Token
 api.interceptors.request.use(
   (config) => {
+    // Guard against accidental double-prefix like /api + /api/vehicles => /api/api/vehicles
+    if (typeof config.url === 'string') {
+      const base = (config.baseURL || '').replace(/\/+$/, '');
+      if (base.endsWith('/api') && config.url.startsWith('/api/')) {
+        config.url = config.url.replace(/^\/api/, '');
+      }
+    }
+
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
