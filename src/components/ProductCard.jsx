@@ -5,6 +5,7 @@ import { AppContext } from '../context/AppContext';
 const ProductCard = ({ product, onAddToCart }) => {
   const navigate = useNavigate();
   const { state } = useContext(AppContext);
+  const isAdmin = state.role === 'ADMIN' || state.role === 'ROLE_ADMIN';
 
   const handleBuyNow = (e) => {
     e.stopPropagation();
@@ -45,22 +46,31 @@ const ProductCard = ({ product, onAddToCart }) => {
             ₹{product.price.toFixed(2)}
           </span>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button 
-              className="btn-secondary" 
-              onClick={(e) => { e.stopPropagation(); onAddToCart(product.id); }}
-              disabled={product.stock === 0}
-              style={{ opacity: product.stock === 0 ? 0.5 : 1, cursor: product.stock === 0 ? 'not-allowed' : 'pointer', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
-            >
-              Add to Cart
-            </button>
-            <button 
-              className="btn-primary" 
-              onClick={handleBuyNow}
-              disabled={product.stock === 0}
-              style={{ opacity: product.stock === 0 ? 0.5 : 1, cursor: product.stock === 0 ? 'not-allowed' : 'pointer', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
-            >
-              {product.stock === 0 ? 'Out of Stock' : 'Buy Now'}
-            </button>
+            {isAdmin ? (
+              // Admin sees a read-only badge instead of purchase buttons
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', alignSelf: 'center' }}>
+                Stock: {product.stock}
+              </span>
+            ) : (
+              <>
+                <button 
+                  className="btn-secondary" 
+                  onClick={(e) => { e.stopPropagation(); onAddToCart(product.id); }}
+                  disabled={product.stock === 0}
+                  style={{ opacity: product.stock === 0 ? 0.5 : 1, cursor: product.stock === 0 ? 'not-allowed' : 'pointer', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                >
+                  Add to Cart
+                </button>
+                <button 
+                  className="btn-primary" 
+                  onClick={handleBuyNow}
+                  disabled={product.stock === 0}
+                  style={{ opacity: product.stock === 0 ? 0.5 : 1, cursor: product.stock === 0 ? 'not-allowed' : 'pointer', padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                >
+                  {product.stock === 0 ? 'Out of Stock' : 'Buy Now'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

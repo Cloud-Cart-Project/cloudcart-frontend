@@ -30,7 +30,11 @@ const Products = () => {
       navigate('/login');
       return;
     }
-    
+
+    // Admins manage inventory via the Admin panel — they do not place orders
+    const isAdmin = state.role === 'ADMIN' || state.role === 'ROLE_ADMIN';
+    if (isAdmin) return;
+
     try {
       await cartAPI.addToCart(productId, 1);
       fetchCartCount();
