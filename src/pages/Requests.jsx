@@ -12,6 +12,7 @@ const Requests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vehiclesMap, setVehiclesMap] = useState({});
+  const [loadError, setLoadError] = useState('');
   const [actionLoading, setActionLoading] = useState('');
   const [assignModal, setAssignModal] = useState({ open: false, requestId: null, technician: '' });
   const [completeModal, setCompleteModal] = useState({ open: false, requestId: null, resolutionNotes: '', downtimeHours: '' });
@@ -43,18 +44,29 @@ const Requests = () => {
 
   const loadRequests = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const [reqsRes, vRes] = await Promise.all([
         requestAPI.getRequests(),
         vehicleAPI.getVehicles() // In real app, only fetch needed
       ]);
-      
+
+      const requestList = Array.isArray(reqsRes.data) ? reqsRes.data : [];
+      const vehicleList = Array.isArray(vRes.data) ? vRes.data : [];
+
+      if (!Array.isArray(reqsRes.data) || !Array.isArray(vRes.data)) {
+        setLoadError('Unexpected API response while loading requests. Please refresh or re-login.');
+      }
+
       const vMap = {};
-      vRes.data.forEach(v => vMap[v.id] = v);
+      vehicleList.forEach(v => vMap[v.id] = v);
       setVehiclesMap(vMap);
-      setRequests(reqsRes.data);
+      setRequests(requestList);
     } catch (err) {
       console.error("Failed to load requests", err);
+      setLoadError(err.response?.data || err.message || 'Failed to load requests');
+      setRequests([]);
+      setVehiclesMap({});
     } finally {
       setLoading(false);
     }
@@ -124,6 +136,11 @@ const Requests = () => {
   return (
     <div className="container">
       <h2 style={{ marginBottom: '2rem' }}>Service Requests</h2>
+      {loadError && (
+        <div className="glass-panel" style={{ marginBottom: '1rem', border: '1px solid var(--accent-danger)', color: 'var(--accent-danger)', padding: '0.75rem' }}>
+          {loadError}
+        </div>
+      )}
 
       {requests.length === 0 ? (
         <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>

@@ -4,6 +4,7 @@ import { vehicleAPI } from '../services/api';
 const Admin = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   
@@ -14,13 +15,21 @@ const Admin = () => {
   const fetchVehicles = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError('');
       const params = {};
       if (search.trim()) params.driverId = search; // Naive search mapping to driverId for now
       if (statusFilter.trim()) params.status = statusFilter;
       const res = await vehicleAPI.getVehicles(params);
+      if (!Array.isArray(res.data)) {
+        setVehicles([]);
+        setLoadError('Unexpected API response while loading vehicles. Please refresh or re-login.');
+        return;
+      }
       setVehicles(res.data);
     } catch (err) {
       console.error('Failed to fetch vehicles', err);
+      setVehicles([]);
+      setLoadError(err.response?.data || err.message || 'Failed to load vehicles');
     } finally {
       setLoading(false);
     }
@@ -101,6 +110,11 @@ const Admin = () => {
           <option value="RETIRED">RETIRED</option>
         </select>
       </div>
+      {loadError && (
+        <div className="glass-panel" style={{ marginBottom: '1rem', border: '1px solid var(--accent-danger)', color: 'var(--accent-danger)', padding: '0.75rem' }}>
+          {loadError}
+        </div>
+      )}
 
       <div className="glass-panel" style={{ overflowX: 'auto' }}>
         {loading ? (
