@@ -19,7 +19,6 @@ const Requests = () => {
 
   useEffect(() => {
     const handleInitialState = async () => {
-      // If we navigated here to create a request
       if (location.state?.createForVehicle) {
         try {
           const v = location.state.createForVehicle;
@@ -36,6 +35,31 @@ const Requests = () => {
           alert('Failed to create request: ' + (e.response?.data || e.message));
         }
       }
+
+      if (location.state?.source === 'queue') {
+        const items = Array.isArray(location.state.items) ? location.state.items : [];
+        if (items.length > 0) {
+          let failures = 0;
+          for (const item of items) {
+            try {
+              await requestAPI.createRequest({
+                vehicleId: item.vehicleId,
+                vehicleNumber: item.vehicleNumber || '',
+                requestType: item.requestType || 'ROUTINE_SERVICE',
+                description: item.notes || 'Created from pending task queue'
+              });
+            } catch (e) {
+              failures += 1;
+              console.error('Failed to create request from queue item', item, e);
+            }
+          }
+          if (failures > 0) {
+            alert(`${failures} queue item(s) failed to formalize into requests.`);
+          }
+        }
+        window.history.replaceState({}, document.title);
+      }
+
       loadRequests();
     };
 

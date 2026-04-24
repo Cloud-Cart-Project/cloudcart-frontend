@@ -57,10 +57,19 @@ const TaskDrawer = ({ isOpen, onClose }) => {
   };
 
   const handleCreateRequest = () => {
+    if (!queue?.tasks?.length) return;
     onClose();
-    // In a real app, this might create a batched request or navigate to a form.
-    // We'll navigate to requests page with a flag to create it.
-    navigate('/requests', { state: { createFromQueue: true, tasks: queue.tasks } });
+    navigate('/requests', {
+      state: {
+        source: 'queue',
+        items: queue.tasks.map((task) => ({
+          vehicleId: task.vehicleId,
+          vehicleNumber: task.vehicle?.vehicleNumber || null,
+          requestType: task.taskType || 'ROUTINE_SERVICE',
+          notes: task.description || ''
+        }))
+      }
+    });
   };
 
   return (
